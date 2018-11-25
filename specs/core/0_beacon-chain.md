@@ -546,6 +546,13 @@ def get_beacon_proposer(state:BeaconState, slot: int) -> ValidatorRecord:
 
 We define another set of helpers to be used throughout: `bytes1(x): return x.to_bytes(1, 'big')`, `bytes2(x): return x.to_bytes(2, 'big')`, and so on for all integers, particularly 1, 2, 3, 4, 8, 32.
 
+We define a function to determine the balance of a validator used for determining punishments and calculating stake:
+
+```python
+def balance_at_stake(validator):
+    return min(validator.balance, DEPOSIT_SIZE)
+```
+
 We define a function to "add a link" to the validator hash chain, used when a validator is added or removed:
 
 ```python
@@ -761,7 +768,7 @@ def exit_validator(index, state, block, penalize, current_slot):
         whistleblower_xfer_amount = validator.deposit // SLASHING_WHISTLEBLOWER_REWARD_DENOMINATOR
         validator.deposit -= whistleblower_xfer_amount
         get_beacon_proposer(state, block.slot).deposit += whistleblower_xfer_amount
-        state.deposits_penalized_in_period[current_slot // COLLECTIVE_PENALTY_CALCULATION_PERIOD] += validator.balance
+        state.deposits_penalized_in_period[current_slot // COLLECTIVE_PENALTY_CALCULATION_PERIOD] += balance_at_stake(validator)
     else:
         validator.status = PENDING_EXIT
     add_validator_set_change_record(state, index, validator.pubkey, EXIT)
@@ -1000,7 +1007,7 @@ def change_validators(validators: List[ValidatorRecord], current_slot: int) -> N
     # The active validator set
     active_validators = get_active_validator_indices(validators)
     # The total balance of active validators
-    total_balance = sum([v.balance for i, v in enumerate(validators) if i in active_validators])
+    total_balance = sum([balance_at_stake(v) for i, v in enumerate(validators) if i in active_validators])
     # The maximum total wei that can deposit+withdraw
     max_allowable_change = max(
         2 * DEPOSIT_SIZE * GWEI_PER_ETH,
@@ -1021,7 +1028,7 @@ def change_validators(validators: List[ValidatorRecord], current_slot: int) -> N
         if validators[i].status == PENDING_EXIT:
             validators[i].status = PENDING_WITHDRAW
             validators[i].last_status_change_slot = current_slot
-            total_changed += validators[i].balance
+            total_changed += balance_at_stake(validators[i])
             add_validator_set_change_record(
                 state=state,
                 index=i,
@@ -1047,7 +1054,7 @@ def change_validators(validators: List[ValidatorRecord], current_slot: int) -> N
     withdrawable_validators = sorted(filter(withdrawable, validators), key=lambda v: v.exit_seq)
     for v in withdrawable_validators[:WITHDRAWALS_PER_CYCLE]:
         if v.status == PENALIZED:
-            v.balance -= v.balance * min(total_penalties * 3, total_balance) // total_balance
+            v.balance -= balance_at_stake(v) * min(total_penalties * 3, total_balance) // total_balance
         v.status = WITHDRAWN
         v.last_status_change_slot = current_slot
 
