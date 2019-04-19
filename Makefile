@@ -16,7 +16,7 @@ PY_SPEC_PHASE_0_TARGETS = $(PY_SPEC_DIR)/eth2spec/phase0/spec.py
 PY_SPEC_ALL_TARGETS = $(PY_SPEC_PHASE_0_TARGETS)
 
 
-.PHONY: clean all test gen_yaml_tests pyspec phase0
+.PHONY: clean all test gen_yaml_tests pyspec phase0 install_test
 
 all: $(PY_SPEC_ALL_TARGETS) $(YAML_TEST_DIR) $(YAML_TEST_TARGETS)
 
@@ -29,9 +29,12 @@ clean:
 # "make gen_yaml_tests" to run generators
 gen_yaml_tests: $(YAML_TEST_DIR) $(YAML_TEST_TARGETS)
 
-# runs a limited set of tests against a minimal config
+# installs the packages to run pyspec tests
+install_test:
+	cd $(PY_SPEC_DIR); python3 -m venv venv; . venv/bin/activate; pip3 install -r requirements.txt;
+
 test: $(PY_SPEC_ALL_TARGETS)
-	cd $(PY_SPEC_DIR); python3 -m venv venv; . venv/bin/activate; pip3 install -r requirements.txt; python -m pytest -m minimal_config .
+	cd $(PY_SPEC_DIR); . venv/bin/activate; python -m pytest -m minimal_config .
 
 # "make pyspec" to create the pyspec for all phases.
 pyspec: $(PY_SPEC_ALL_TARGETS)
