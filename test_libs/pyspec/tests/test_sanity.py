@@ -24,6 +24,7 @@ from eth2spec.phase0.spec import (
     advance_slot,
     cache_state,
     set_balance,
+    is_active_validator,
     slot_to_epoch,
     verify_merkle_branch,
     hash,
@@ -43,6 +44,7 @@ from .helpers import (
     get_valid_attestation,
     get_valid_attester_slashing,
     get_valid_proposer_slashing,
+    next_epoch,
     next_slot,
     privkeys,
     pubkeys,
@@ -259,6 +261,11 @@ def test_deposit_in_block(state):
     assert len(post_state.balances) == len(state.balances) + 1
     assert get_balance(post_state, index) == spec.MAX_DEPOSIT_AMOUNT
     assert post_state.validator_registry[index].pubkey == pubkeys[index]
+
+    state = post_state
+    for _ in range(spec.ACTIVATION_EXIT_DELAY + 1) :
+        next_epoch(state)
+    assert is_active_validator(state.validator_registry[index], get_current_epoch(state))
 
     return pre_state, [block], post_state
 
