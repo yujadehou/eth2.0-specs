@@ -27,12 +27,12 @@ def gen_edge_case(edge_case: EdgeCaseDef):
     (description, typ, state, data, executor, does_error) = edge_case
     yield 'description', description
     yield 'pre', encode(state, spec.BeaconState)
-    yield 'data', encode(state, typ)
+    yield 'data', encode(data, typ)
     if does_error:
-        expect_error(executor(state, data))
+        expect_error(lambda: executor(state, data))
     else:
         executor(state, data)
-    yield 'post', None if does_error else state
+    yield 'post', None if does_error else encode(state, spec.BeaconState)
 
 
 def run_edge_case(edge_case: EdgeCaseDef):
@@ -55,7 +55,7 @@ def edge_case(description: str, typ: Any, runner: EdgeCaseExec, does_error=False
     def edge_case_wrap(fn):
         def edge_case_entry(*args, **kw):
             state, change = fn(*args, **kw)
-            return EdgeCaseDef(description, typ, state, change, runner, does_error)
+            return tuple((description, typ, state, change, runner, does_error))
         return edge_case_entry
     return edge_case_wrap
 
