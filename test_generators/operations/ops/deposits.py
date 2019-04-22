@@ -125,6 +125,26 @@ def invalid_deposit_index():
 
 
 @to_dict
+def invalid_deposit_signature():
+    new_dep, state = build_deposit_for_index(10, 10)
+    # Make deposit data signature (proof of possession) invalid
+    new_dep.data.signature[0] ^= b'\xff'
+    yield 'description', 'invalid deposit proof of possession'
+    yield 'pre', encode(state, spec.BeaconState)
+    yield 'deposit', encode(new_dep, spec.Deposit)
+    # TODO(@Danny): the BLS impl. in the spec does not actually verify the signature.
+    # Temp. solution: Just state that it should be disallowed.
+    yield 'post', None
+    # # When spec supports BLS verify:
+    # try:
+    # spec.process_deposit(state, new_dep)
+    # except AssertionError:
+    #     expected
+    #     yield 'post', None
+    #     return
+    # raise Exception('invalid_deposit_signature has unexpectedly allowed deposit')
+
+@to_dict
 def invalid_deposit_proof():
     new_dep, state = build_deposit_for_index(10, 10)
     # Make deposit proof invalid (at bottom of proof)
@@ -139,7 +159,7 @@ def invalid_deposit_proof():
         # expected
         yield 'post', None
         return
-    raise Exception('invalid_deposit_index has unexpectedly allowed deposit')
+    raise Exception('invalid_deposit_proof has unexpectedly allowed deposit')
 
 
 @to_tuple
@@ -148,6 +168,7 @@ def deposit_cases():
     yield valid_topup()
     yield invalid_deposit_index()
     yield invalid_deposit_proof()
+    yield invalid_deposit_signature()
 
 
 def mini_deposits_suite(configs_path: str) -> gen_typing.TestSuiteOutput:
