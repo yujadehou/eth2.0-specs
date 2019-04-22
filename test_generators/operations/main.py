@@ -1,6 +1,6 @@
 from gen_base import gen_runner
 
-from ops.deposits import mini_deposits_suite, full_deposits_suite
+from gen.deposits import mini_deposits_suite, full_deposits_suite
 
 if __name__ == "__main__":
     gen_runner.run_generator("operations", [
