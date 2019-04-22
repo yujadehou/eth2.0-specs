@@ -31,7 +31,7 @@ gen_yaml_tests: $(PY_SPEC_ALL_TARGETS) $(YAML_TEST_DIR) $(YAML_TEST_TARGETS)
 
 # installs the packages to run pyspec tests
 install_test:
-	cd $(PY_SPEC_DIR); python3 -m venv venv; . venv/bin/activate; pip3 install -r requirements-testing.txt;
+	cd $(PY_SPEC_DIR); python3 -m venv venv; . venv/bin/activate; pip3 install -e .[dev];
 
 test: $(PY_SPEC_ALL_TARGETS)
 	cd $(PY_SPEC_DIR); . venv/bin/activate; python -m pytest .
@@ -63,7 +63,7 @@ define build_yaml_tests
 	# 3) Install all the necessary requirements
 	# 4) Run the generator. The generator is assumed to have an "main.py" file.
 	# 5) We output to the tests dir (generator program should accept a "-o <filepath>" argument.
-	cd $(GENERATOR_DIR)$(1); python3 -m venv venv; . venv/bin/activate; pip3 install -r requirements.txt; python3 main.py -o $(CURRENT_DIR)/$(YAML_TEST_DIR)$(1) -c $(CURRENT_DIR)/$(CONFIGS_DIR)
+	cd $(GENERATOR_DIR)$(1); python3 -m venv venv; . venv/bin/activate; pip3 install -e .[pyspec]; python3 main.py -o $(CURRENT_DIR)/$(YAML_TEST_DIR)$(1) -c $(CURRENT_DIR)/$(CONFIGS_DIR)
 
 	$(info generator $(1) finished)
 endef
