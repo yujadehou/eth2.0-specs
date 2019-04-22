@@ -7,7 +7,7 @@ from preset_loader import loader
 
 from helpers_deposits import build_deposit_for_index
 
-from edge_case import edge_case
+from eth2spec.debug.edge_case import edge_case, gen_edge_case
 
 
 
@@ -50,12 +50,11 @@ def invalid_deposit_proof():
 
 @to_tuple
 def deposit_cases():
-    yield valid_deposit()
-    yield valid_topup()
-    yield invalid_deposit_index()
-    yield invalid_deposit_proof()
-    # Disabled, see comment
-    # yield invalid_deposit_signature()
+    # Disabled, see comment: invalid_deposit_signature
+    edge_cases = [valid_deposit, valid_topup, invalid_deposit_index, invalid_deposit_proof]
+    for cas_fn in edge_cases:
+        cas_def = cas_fn()
+        yield gen_edge_case(cas_def)
 
 
 def mini_deposits_suite(configs_path: str) -> gen_typing.TestSuiteOutput:
